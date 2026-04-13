@@ -2,43 +2,40 @@ import requests, boto3, pandas as pd
 import os
 
 MS1_URL = os.getenv("MS1_URL", "http://98.88.24.29:8000")
+BUCKET = "peliculas-datalake"
 
-def fetch_all_usuarios():
-    all_data = []
-    page = 1
-    MAX_PAGES = 100  
+def fetch_todos_los_registros():
+    try:
+        resp = requests.get(f"{MS1_URL}/usuarios_registros", timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error al conectar con la API: {e}")
+        return None
 
-    while page <= MAX_PAGES:
-        try:
-            resp = requests.get(
-                f"{MS1_URL}/usuarios_registros",
-                params={"page": page, "limit": 500},
-                timeout=30
-            )
-            resp.raise_for_status()
-            batch = resp.json()
-
-            if not batch:  # si viene vacío, ya terminamos
-                print(f"✅ Fin en página {page}, total: {len(all_data)} registros")
-                break
-
-            all_data.extend(batch)
-            print(f"📄 Página {page} — acumulado: {len(all_data)} registros")
-            page += 1
-
-        except requests.exceptions.ConnectionError as e:
-            print(f"❌ Error de conexión en página {page}: {e}")
-            break
-
-    return all_data
-
-data = fetch_all_usuarios()
+data = fetch_todos_los_registros()
 
 if not data:
     print("⚠️ No se obtuvieron datos")
 else:
-    df = pd.DataFrame(data)
-    df.to_csv("/app/output/usuarios.csv", index=False)
     s3 = boto3.client("s3")
-    s3.upload_file("/app/output/usuarios.csv", "peliculas-datalake", "usuarios/usuarios.csv")
-    print(f"✅ {len(df)} registros subidos a S3")
+
+    tablas = {
+        "usuarios":         data.get("usuarios", []),
+        "listas":           data.get("listas", []),
+        "listas_peliculas": data.get("listas_peliculas", []),
+        "peliculas_vistas": data.get("peliculas_vistas", []),
+    }
+
+    for nombre, registros in tablas.items():
+        if not registros:
+            print(f"⚠️  {nombre}: sin registros, se omite")
+            continue
+
+        df = pd.DataFrame(registros)
+        local_path = f"/app/output/{nombre}.csv"
+        s3_key = f"usuarios/{nombre}.csv"
+
+        df.to_csv(local_path, index=False)
+        s3.upload_file(local_path, BUCKET, s3_key)
+        print(f"✅ {nombre}.csv → s3://{BUCKET}/{s3_key} ({len(df)} filas)")
