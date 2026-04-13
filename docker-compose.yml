@@ -5,7 +5,6 @@ services:
     build: ./usuarios
     container_name: etl_usuarios
     environment:
-      # 👇 IP real (o hostname) de tu VM 2
       MS1_URL: "http://98.88.24.29:8000"
     volumes:
       - ./output:/app/output   # para inspeccionar CSVs localmente si quieres
