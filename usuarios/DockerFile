@@ -1,0 +1,19 @@
+# Imagen base oficial Python, slim para que pese menos
+FROM python:3.11-slim
+
+# Directorio de trabajo dentro del contenedor
+WORKDIR /app
+
+# Primero copia solo el requirements para aprovechar el cache de Docker
+# (si no cambia requirements.txt, no reinstala en cada build)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Luego copia el script
+COPY contenedor1.py
+
+# Carpeta donde se guardará el CSV temporalmente
+RUN mkdir -p /app/output
+
+# Comando que se ejecuta al correr el contenedor
+CMD ["python", "contenedor1.py"]
