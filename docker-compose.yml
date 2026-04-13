@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   usuarios:
-    build: .
+    build: ./usuarios
     container_name: etl_usuarios
     environment:
       # 👇 IP real (o hostname) de tu VM 2
