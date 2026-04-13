@@ -11,7 +11,7 @@ def fetch_all_usuarios():
     while page <= MAX_PAGES:
         try:
             resp = requests.get(
-                f"{MS1_URL}/usuarios",
+                f"{MS1_URL}/usuarios_registros",
                 params={"page": page, "limit": 500},
                 timeout=30
             )
