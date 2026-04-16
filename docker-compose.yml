@@ -5,7 +5,15 @@ services:
     build: ./usuarios
     container_name: etl_usuarios
     environment:
-      MS1_URL: "http://98.88.24.29:8000"
+      MS1_URL: "http://54.234.118.130:8000"
     volumes:
-      - ./output:/app/output   # para inspeccionar CSVs localmente si quieres
-    restart: "no"              # es un job, no un server
+      - ./output:/app/output  
+    restart: "no"      
+  peliculas:
+    build: ./Peliculas
+    container_name: etl_peliculas
+    environment:
+      MS2_URL: http://54.234.118.130:3000"
+    volumes:
+      - ./output:/app/output
+    restart: "no"      
