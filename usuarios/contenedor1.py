@@ -1,7 +1,7 @@
 import requests, boto3, pandas as pd
 import os
 
-MS1_URL = os.getenv("MS1_URL", "http://54.234.118.130:8000")
+MS1_URL = os.getenv("MS1_URL")
 BUCKET = "peliculas-datalake"
 
 def fetch_todos_los_registros():
