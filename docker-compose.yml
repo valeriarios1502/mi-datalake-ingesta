@@ -1,19 +1,31 @@
-version: "3.8"
-
 services:
   usuarios:
     build: ./usuarios
     container_name: etl_usuarios
+    env_file:
+      - .env
     environment:
-      MS1_URL: "http://54.234.118.130:8000"
+      MS1_URL: ${MS1_URL}
     volumes:
-      - ./output:/app/output  
-    restart: "no"      
+      - ./output:/app/output
+    restart: "no"
   peliculas:
     build: ./Peliculas
     container_name: etl_peliculas
+    env_file:
+      - .env
     environment:
-      MS2_URL: http://54.234.118.130:3000"
+      MS2_URL: ${MS2_URL}
     volumes:
       - ./output:/app/output
-    restart: "no"      
+    restart: "no"
+  foro:
+    build: ./Foro
+    container_name: etl_foro
+    env_file:
+      - .env
+    environment:
+      MS3_URL: ${MS3_URL}
+    volumes:
+      - ./output:/app/output
+    restart: "no"
