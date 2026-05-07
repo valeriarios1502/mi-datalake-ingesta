@@ -8,14 +8,13 @@ BUCKET  = os.getenv("BUCKET", "peliculas-datalake")
 
 def fetch_paginado(endpoint: str, sort_by: str = "date") -> list:
     """
-    Consume un endpoint paginado de Spring Boot (/all?page=X&size=100)
-    y devuelve TODOS los registros concatenados.
+    Consume un endpoint paginado de Spring Boot.
     """
     todos = []
     page  = 0
-    size  = 100  # registros por página
+    size  = 100  
 
-    print(f"📥 Iniciando ingesta de: {endpoint}")
+    print(f"Iniciando ingesta de: {endpoint}")
 
     while True:
         url    = f"{MS_URL}/api/{endpoint}/all"
@@ -25,12 +24,11 @@ def fetch_paginado(endpoint: str, sort_by: str = "date") -> list:
             resp = requests.get(url, params=params, timeout=30)
             resp.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(f"❌ Error al conectar con {url}: {e}")
+            print(f"Error al conectar con {url}: {e}")
             break
 
         body = resp.json()
 
-        # Spring Boot Page devuelve: { content: [...], totalPages: N, last: bool }
         registros    = body.get("content", [])
         es_ultima    = body.get("last", True)
         total_paginas = body.get("totalPages", 1)
@@ -43,7 +41,7 @@ def fetch_paginado(endpoint: str, sort_by: str = "date") -> list:
 
         page += 1
 
-    print(f"✅ Total obtenido de '{endpoint}': {len(todos)} registros\n")
+    print(f"Total obtenido de '{endpoint}': {len(todos)} registros\n")
     return todos
 
 
@@ -52,7 +50,7 @@ def subir_a_s3(s3_client, registros: list, nombre_tabla: str, prefijo_s3: str):
     Convierte lista de registros a CSV y sube al bucket S3.
     """
     if not registros:
-        print(f"⚠️  {nombre_tabla}: sin registros, se omite")
+        print(f"{nombre_tabla}: sin registros, se omite")
         return
 
     df         = pd.DataFrame(registros)
@@ -63,20 +61,15 @@ def subir_a_s3(s3_client, registros: list, nombre_tabla: str, prefijo_s3: str):
     df.to_csv(local_path, index=False)
 
     s3_client.upload_file(local_path, BUCKET, s3_key)
-    print(f"☁️  {nombre_tabla}.csv → s3://{BUCKET}/{s3_key} ({len(df)} filas)")
+    print(f"{nombre_tabla}.csv → s3://{BUCKET}/{s3_key} ({len(df)} filas)")
 
 
 def main():
-    print("=" * 50)
-    print("🚀 Iniciando ingesta: Microservicio Foros/Mensajería")
-    print("=" * 50)
 
-    # ── 1. Extraer datos de los 3 endpoints ──────────────────────────────────
     messages = fetch_paginado("messages", sort_by="timestamp")
     posts    = fetch_paginado("posts",    sort_by="date")
     threads  = fetch_paginado("threads",  sort_by="date")
 
-    # ── 2. Subir a S3 ────────────────────────────────────────────────────────
     s3 = boto3.client("s3")
 
     tablas = {
@@ -85,11 +78,10 @@ def main():
         "threads":  threads,
     }
 
-    print("\n📤 Subiendo archivos a S3...")
+    print("\nSubiendo archivos a S3...")
     for nombre, registros in tablas.items():
         subir_a_s3(s3, registros, nombre, prefijo_s3="foros")
 
-    print("\n✅ Ingesta completada.")
 
 
 if __name__ == "__main__":
