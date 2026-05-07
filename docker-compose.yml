@@ -6,6 +6,8 @@ services:
       - .env
     environment:
       MS1_URL: ${MS1_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     volumes:
       - ./output:/app/output
     restart: "no"
